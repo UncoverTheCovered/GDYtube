@@ -56,16 +56,18 @@ def is_connection_err(exc):
 
 def check_internet():
     try:
-        response = requests.get("https://www.google.com", timeout=5)
+        response = requests.get("https://www.bing.com", timeout=5)
         return response.status_code == 200
-    except requests.ConnectionError:
+    except Exception as e:
+        # messagebox.showerror("Error", "Check your connection\nAnd click OK to continue")
+        
         return False
 
 
 
 
 def check_entry_content():
-    if playlistId.get():
+    if url_input_field.get():
         get_videos.config(state=NORMAL)  # Enable the button
     else:
         download_start.config(state=DISABLED)
@@ -74,7 +76,7 @@ def check_entry_content():
         list_box.delete(0, END)
 
 def clear_entry():
-    playlistId.delete(0, END)  # Clear the entry's content
+    url_input_field.delete(0, END)  # Clear the entry's content
     check_entry_content()
     select_all_checkbox.config(state=DISABLED)
 
@@ -110,7 +112,7 @@ def paste_from_clipboard():
     clear_entry()
 
     clipboard_data = root.clipboard_get()
-    playlistId.insert(0, clipboard_data)
+    url_input_field.insert(0, clipboard_data)
     check_entry_content()
     
 def check_selection(event):
@@ -174,7 +176,7 @@ def straight_download(url=None):
 
 # straight_download()
 def get_list_videos(): 
-    global playlist_item_by_id 
+    # global video_item
     # Clear ListBox 
     list_box.delete(0, 'end') 
 
@@ -191,44 +193,61 @@ def get_list_videos():
             list_box.config(state=NORMAL)
             
 
+    global playlist_item_by_id 
     # Create API Object 
     api = Api(api_key=os.environ.get("API_KEY")) 
     # try:
-    
+        
             
 
-    if "youtube" in playlistId.get(): 
-        playlist_id = playlistId.get()[len( 
-            "https://www.youtube.com/playlist?list="):] 
-    else: 
-        playlist_id = playlistId.get() 
+    if "youtube" in url_input_field.get() and "playlist" in url_input_field.get(): 
+        playlist_id = url_input_field.get()[len( 
+            "https://www.youtube.com/playlist?list="):]
+        print(playlist_id) 
+        # print(selected_option.get())
+        # Get list of video links 
+        playlist_item_by_id = api.get_playlist_items( 
+            playlist_id=playlist_id, count=None, return_json=True) 
+        
 
-    # Get list of video links 
-    playlist_item_by_id = api.get_playlist_items( 
-        playlist_id=playlist_id, count=None, return_json=True) 
-    
+        # Iterate through all video links and insert into listbox
+        for index, videoid in enumerate(playlist_item_by_id['items']):
+            video_id = videoid['contentDetails']['videoId']
+            video_title = videoid['snippet']['title']
+        
+            list_box.insert(END, f" {str(index+1)}. {video_title}")
+            # all_items = [list_box.get(index) for index in range(list_box.size())]
+            # print(len(all_items))
+            # list_box.insert(END, f" {str(index+1)}. {video_title}     Size: {get_video_id(video_id=video_id)} MB")
+        # link = f"https://www.youtube.com/watch?v={videoid}"
+        # link = f"https://www.youtube.com/watch?v={video_id}"
 
-    # Iterate through all video links and insert into listbox
-    for index, videoid in enumerate(playlist_item_by_id['items']):
-        video_id = videoid['contentDetails']['videoId']
-        video_title = videoid['snippet']['title']
-    
-        list_box.insert(END, f" {str(index+1)}. {video_title}")
-        # all_items = [list_box.get(index) for index in range(list_box.size())]
-        # print(len(all_items))
-        # list_box.insert(END, f" {str(index+1)}. {video_title}     Size: {get_video_id(video_id=video_id)} MB")
+        # yt_obj = YouTube(link)
+
+        # video_title = yt_obj.title  # Get the video title
+
+        # print(f"Video Title: {video_title}")
+        # video_size_mb = yt_obj.streams.get_highest_resolution().filesize / (1024 * 1024)  # Video size in MB
+        # print(f"Video Size (MB): {video_size_mb:.2f} MB")
+    if "youtu.be" in url_input_field.get():
+        video_id = url_input_field.get()[len("https://youtu.be/"):]
+        
+        # Get the video and it title
+        video_item = api.get_video_by_id(video_id=video_id, return_json=True)
+        # print(video)
+        video_info =video_item["items"][0]["snippet"]
+        video_title =video_info["title"]
+        
+        print(video_id) 
 
 
-    # link = f"https://www.youtube.com/watch?v={videoid}"
-    # link = f"https://www.youtube.com/watch?v={video_id}"
+        list_box.insert(END, f"{video_title}")
 
-    # yt_obj = YouTube(link)
+        # playlist_id = url_input_field.get() 
 
-    # video_title = yt_obj.title  # Get the video title
+        # https://youtu.be/0hEmxOEeVO0
+        # https://www.youtube.com/watch?v=S7MNX_UD7vY
 
-    # print(f"Video Title: {video_title}")
-    # video_size_mb = yt_obj.streams.get_highest_resolution().filesize / (1024 * 1024)  # Video size in MB
-    # print(f"Video Size (MB): {video_size_mb:.2f} MB")
 
     # The list become clickable based on the state of the Choose path button
     if get_path.cget("state") == "normal":
@@ -241,9 +260,9 @@ def get_list_videos():
         list_box.config(state=DISABLED)
         get_path.config(state=NORMAL)
             # Simulating the exception for demonstration purposes
-            # raise pyyoutube.error.PyYouTubeException("YouTubeException(status_code=404,message=The playlist identified with the request's <code>playlistId</code> parameter cannot be found.)")
+            # raise pyyoutube.error.PyYouTubeException("YouTubeException(status_code=404,message=The playlist identified with the request's <code>url_input_field</code> parameter cannot be found.)")
     # except Exception as e:
-    # #     # Handle the exception
+        # #     # Handle the exception
     # #     error_message = str(e)  # Get the error message from the exception
     #     # print(e.with_traceback())
     #     print("No connection")
@@ -262,41 +281,61 @@ def threading():
 
 
 def download_videos():
-    while check_internet() == False:
-        print("No internet connection.")
-        messagebox.showerror("Error", "Check your connection\nAnd click OK to continue")
-    else:
-        print("Internet connection is available.")
-        if get_path.cget("state") == "disabled":
-            select_all_checkbox_var.set(0)
-            checkbutton_state()
-            list_box.config(state=NORMAL) 
-    download_start.config(state="disabled") 
-    get_path.config(state="disabled")
-    get_videos.config(state="disabled") 
+    def connection_checker():
+        while check_internet() == False:
+            print("No internet connection.")
+            messagebox.showerror("Error", "Check your connection\nAnd click OK to continue")
+        else:
+            print("Internet connection is available.")
+            if get_path.cget("state") == "disabled":
+                select_all_checkbox_var.set(0)
+                checkbutton_state()
+                list_box.config(state=NORMAL) 
+        download_start.config(state="disabled") 
+        get_path.config(state="disabled")
+        get_videos.config(state="disabled") 
 
+    connection_checker()
 
     # Iterate through all selected videos 
     # Counter variable to keep track of position number
-    position = 1
+    # position = 1
     for i in list_box.curselection():
+        video_id = ""
         video_title = list_box.get(i)
-        
-        videoid = playlist_item_by_id['items'][i]['contentDetails']['videoId']
-        # print(videoid) 
 
-        link = f"https://www.youtube.com/watch?v={videoid}"
+        if "youtu.be" in url_input_field.get():
+            video_id = url_input_field.get()[len("https://youtu.be/"):]
+        
+            print(video_id)
+
+        # if selected_option.get() == "Enter Playlist URL":
+    
+        # print(video)
+        # video_info =video_item["items"][0]["snippet"]
+    
+        if "youtube" in url_input_field.get() and "playlist" in url_input_field.get(): 
+            playlist_id = url_input_field.get()[len( 
+                "https://www.youtube.com/playlist?list="):]
+            # print(selected_option.get())
+            # Get list of video links 
+            # playlist_item_by_id = api.get_playlist_items(playlist_id=playlist_id, count=None, return_json=True) 
+            video_id = playlist_item_by_id['items'][i]['contentDetails']['videoId']
+            print(video_id) 
+            
+
+        link = f"https://www.youtube.com/watch?v={video_id}"
 
         yt_obj = YouTube(link)
 
-        # video_title = yt_obj.title  # Get the video title
+    #     # video_title = yt_obj.title  # Get the video title
         print(video_title)
 
-    #     print(f"Video Title: {video_title}")
-    #     video_size_mb = yt_obj.streams.get_highest_resolution().filesize / (1024 * 1024)  # Video size in MB
-    #     print(f"Video Size (MB): {video_size_mb:.2f} MB")
+    # #     print(f"Video Title: {video_title}")
+    # #     video_size_mb = yt_obj.streams.get_highest_resolution().filesize / (1024 * 1024)  # Video size in MB
+    # #     print(f"Video Size (MB): {video_size_mb:.2f} MB")
 
-    #     list_box.insert(END, f" {video_size_mb:.2f} MB")
+    # #     list_box.insert(END, f" {video_size_mb:.2f} MB")
         
         
 
@@ -305,10 +344,12 @@ def download_videos():
         # download the highest quality video 
         with open(output_dir, "r") as path_file:
             output_path = path_file.readline()
+        
+        connection_checker()
         filters.get_highest_resolution().download(output_path=output_path, filename_prefix=str(video_title).split(".")[0] + ". ")
 
         # Increment position counter
-        position += 1
+        # position += 1
 
     messagebox.showinfo("Success", "Video Successfully downloaded") 
     download_start.config(state="normal") 
@@ -353,13 +394,13 @@ radio_button_frame.pack()
 
 # Create radio buttons and associate them with the variable
 selected_option = StringVar()
-selected_option.set("Enter Playlist URL")  # Set the default value
-option1 = Radiobutton(radio_button_frame, text="Standard", value="Enter video URL", variable=selected_option, command=show_selected)
-option2 = Radiobutton(radio_button_frame, text="Playlist", value="Enter Playlist URL", variable=selected_option, command=show_selected)
+# selected_option.set("Enter Playlist URL")  # Set the default value
+# option1 = Radiobutton(radio_button_frame, text="Standard", value="Enter video URL", variable=selected_option, command=show_selected)
+# option2 = Radiobutton(radio_button_frame, text="Playlist", value="Enter Playlist URL", variable=selected_option, command=show_selected)
 
-# Pack the radio buttons and label horizontally
-option1.pack(side="left", padx=10)
-option2.pack(side="left", padx=10)
+# # Pack the radio buttons and label horizontally
+# option1.pack(side="left", padx=10)
+# option2.pack(side="left", padx=10)
 
 # Create a label to display the selected option
 label = Label(radio_button_frame, text="Enter Playlist URL:", font="italic 10")
@@ -367,9 +408,9 @@ label.pack(side="left", padx=10)
 
 
 # Add Entry box 
-playlistId = Entry(root, width=60) 
+url_input_field = Entry(root, width=60) 
 
-playlistId.pack(pady=5)
+url_input_field.pack(pady=5)
 clear_url = Button(root, text="Clear link", command=clear_entry)
 clear_url.pack(padx=10) 
 
@@ -386,7 +427,7 @@ get_videos = Button(button_frame, text="Get Videos", command=get_list_videos, st
 get_videos.pack(side="left", padx=10)
 
 # Bind the function to the Entry widget
-playlistId.bind("<KeyRelease>", lambda event: check_entry_content())
+url_input_field.bind("<KeyRelease>", lambda event: check_entry_content())
 
 # Choose a path for video
 get_path = Button(button_frame, text="Choose a path", command=get_path, state=DISABLED)
