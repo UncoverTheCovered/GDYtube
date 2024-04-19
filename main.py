@@ -1,7 +1,7 @@
 # Import Required Modules 
 from tkinter import *
 from pyyoutube import Api 
-from pytube import YouTube 
+from pytube import YouTube, Playlist
 from threading import Thread 
 from tkinter import messagebox
 from tkinter import filedialog
@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 import logging
 
 # Set up logging (optional)
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 
 load_dotenv(".env")
 
@@ -61,20 +61,6 @@ def check_internet():
     except requests.ConnectionError:
         return False
 
-
-
-
-# def check_internet_connection():
-#     try:
-#         # Try to connect to a well-known website (e.g., google.com)
-#         host = "www.google.com"
-#         socket.create_connection((host, 80), timeout=5)
-#         print("Internet connection is available.")
-#         return True
-#     except OSError:
-#         print("No internet connection or connection timeout.")
-#         check_internet_connection()
-#         return False
 
 
 
@@ -171,6 +157,22 @@ def checkbutton_state():
         list_box.selection_clear(0, num_items - 1)
         download_start.config(state=DISABLED)  # Disable the button
 
+def straight_download(url=None):
+    from pytube import Playlist
+
+    # Input the URL of the playlist
+    playlist_url = input('Enter the URL of the playlist: ')
+    playlist = Playlist(playlist_url)
+
+    # Print the number of videos in the playlist
+    print(f'Number of videos in the playlist: {len(playlist.video_urls)}')
+
+    # Download each video in the playlist
+    for video_url in playlist.video_urls:
+        print(video_url)
+        # Download logic here (e.g., using stream.download())
+
+# straight_download()
 def get_list_videos(): 
     global playlist_item_by_id 
     # Clear ListBox 
@@ -275,22 +277,26 @@ def download_videos():
 
 
     # Iterate through all selected videos 
-    
+    # Counter variable to keep track of position number
+    position = 1
     for i in list_box.curselection():
+        video_title = list_box.get(i)
+        
         videoid = playlist_item_by_id['items'][i]['contentDetails']['videoId']
-        print(videoid) 
+        # print(videoid) 
 
         link = f"https://www.youtube.com/watch?v={videoid}"
 
         yt_obj = YouTube(link)
 
-        video_title = yt_obj.title  # Get the video title
+        # video_title = yt_obj.title  # Get the video title
+        print(video_title)
 
-        print(f"Video Title: {video_title}")
-        video_size_mb = yt_obj.streams.get_highest_resolution().filesize / (1024 * 1024)  # Video size in MB
-        print(f"Video Size (MB): {video_size_mb:.2f} MB")
+    #     print(f"Video Title: {video_title}")
+    #     video_size_mb = yt_obj.streams.get_highest_resolution().filesize / (1024 * 1024)  # Video size in MB
+    #     print(f"Video Size (MB): {video_size_mb:.2f} MB")
 
-        list_box.insert(END, f" {video_size_mb:.2f} MB")
+    #     list_box.insert(END, f" {video_size_mb:.2f} MB")
         
         
 
@@ -299,7 +305,10 @@ def download_videos():
         # download the highest quality video 
         with open(output_dir, "r") as path_file:
             output_path = path_file.readline()
-        filters.get_highest_resolution().download(output_path=output_path) 
+        filters.get_highest_resolution().download(output_path=output_path, filename_prefix=str(video_title).split(".")[0] + ". ")
+
+        # Increment position counter
+        position += 1
 
     messagebox.showinfo("Success", "Video Successfully downloaded") 
     download_start.config(state="normal") 
@@ -330,7 +339,32 @@ Label(root, text="GUIDASWORLD Youtube Playlist Downloader",
 	font="italic 15 bold").pack(pady=10) 
 Label(root, text="Highest resolutions only", 
 	font="italic 10 bold").pack(pady=10) 
-Label(root, text="Enter Playlist URL:-", font="italic 10").pack() 
+
+
+def show_selected():
+   # Display the selected option
+    label.config(text=selected_option.get())
+
+
+
+# Create a frame to hold playlist or one video radio button
+radio_button_frame = Frame(root)
+radio_button_frame.pack()
+
+# Create radio buttons and associate them with the variable
+selected_option = StringVar()
+selected_option.set("Enter Playlist URL")  # Set the default value
+option1 = Radiobutton(radio_button_frame, text="Standard", value="Enter video URL", variable=selected_option, command=show_selected)
+option2 = Radiobutton(radio_button_frame, text="Playlist", value="Enter Playlist URL", variable=selected_option, command=show_selected)
+
+# Pack the radio buttons and label horizontally
+option1.pack(side="left", padx=10)
+option2.pack(side="left", padx=10)
+
+# Create a label to display the selected option
+label = Label(radio_button_frame, text="Enter Playlist URL:", font="italic 10")
+label.pack(side="left", padx=10)
+
 
 # Add Entry box 
 playlistId = Entry(root, width=60) 
