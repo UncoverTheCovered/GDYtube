@@ -13,6 +13,7 @@ import errno, socket, ssl
 import requests
 import os
 from dotenv import load_dotenv
+from tools.security import Security
 import logging
 
 # Set up logging (optional)
@@ -115,6 +116,9 @@ def get_path():
 def paste_from_clipboard():
     # clear Input before pasting a new link
     clear_entry()
+    status_label.configure(text="Thanks for using GDYtube!", text_color="white", fg_color="blue")
+    list_box.delete(0, 'end') 
+    
 
     clipboard_data = root.clipboard_get()
     url_input_field.insert(0, clipboard_data)
@@ -177,21 +181,19 @@ def straight_download(url=None):
     # Download each video in the playlist
     for video_url in playlist.video_urls:
         print(video_url)
-        # Download logic here (e.g., using stream.download())
 
 # straight_download()
 def get_list_videos(): 
-    progress_bar.pack()
+    status_label.configure(text="Getting your video or videos", text_color="white", fg_color="blue")
+    # progress_bar.pack()
 
-    # global video_item
-    # Clear ListBox 
     list_box.delete(0, 'end') 
 
-        # Call the function to check internet connection
-
+    # Call the function to check internet connection
     while check_internet() == False:
         print("No internet connection.")
         messagebox.showerror("Error", "Check your connection\nAnd click OK to continue")
+        check_internet()
     else:
         print("Internet connection is available.")
         if get_path.cget("state") == "disabled":
@@ -222,25 +224,13 @@ def get_list_videos():
             video_title = videoid['snippet']['title']
         
             list_box.insert(END, f" {str(index+1)}. {video_title}")
-            # all_items = [list_box.get(index) for index in range(list_box.size())]
-            # print(len(all_items))
-            # list_box.insert(END, f" {str(index+1)}. {video_title}     Size: {get_video_id(video_id=video_id)} MB")
-        # link = f"https://www.youtube.com/watch?v={videoid}"
-        # link = f"https://www.youtube.com/watch?v={video_id}"
+            
 
-        # yt_obj = YouTube(link)
-
-        # video_title = yt_obj.title  # Get the video title
-
-        # print(f"Video Title: {video_title}")
-        # video_size_mb = yt_obj.streams.get_highest_resolution().filesize / (1024 * 1024)  # Video size in MB
-        # print(f"Video Size (MB): {video_size_mb:.2f} MB")
     elif "youtu.be" in url_input_field.get():
         video_id = url_input_field.get()[len("https://youtu.be/"):]
         
         # Get the video and it title
         video_item = api.get_video_by_id(video_id=video_id, return_json=True)
-        # print(video)
         video_info =video_item["items"][0]["snippet"]
         video_title =video_info["title"]
         
@@ -262,13 +252,6 @@ def get_list_videos():
     
     else:
         status_label.configure(text="URL not supported", text_color="white", fg_color="red")
-
-        # list_box.insert(END, f"{video_title}")
-
-        # playlist_id = url_input_field.get() 
-
-        # https://youtu.be/0hEmxOEeVO0
-        # https://www.youtube.com/watch?v=S7MNX_UD7vY
 
 
     # The list become clickable based on the state of the Choose path button
@@ -319,6 +302,7 @@ def connection_checker():
 
 def download_videos():
     
+    status_label.configure(text="About to start downloading!", text_color="white", fg_color="blue")
     # resolution = resolution_var.get()
     # print(resolution)
 
@@ -344,7 +328,7 @@ def download_videos():
             print(video_id)
 
         # if selected_option.get() == "Enter Playlist URL":
-        
+            
         # print(video)
         # video_info =video_item["items"][0]["snippet"]
     
@@ -364,23 +348,20 @@ def download_videos():
             video_id = url_input_field.get()[len("https://www.youtube.com/watch?v="):]
         
             print(video_id)
-            # https://youtu.be/kMOi0LvupN0
-        
-        # else:
-        #     status_label.configure(text="URL not supported", text_color="white", fg_color="red")
+
+
+
+            
 
         link = f"https://www.youtube.com/watch?v={video_id}"
         yt_obj = YouTube(link, on_progress_callback=on_progress)
 
-    #     # video_title = yt_obj.title  # Get the video title
+        video_title = yt_obj.title  # Get the video title
+
+        # Handling Unwanted characters in title
+        video_title = Security().remove_characters(input_string=str(video_title).split(".")[0], characters=["/", "|", "\n", "#", "\\", "%"])[0]
         print(video_title)
-
-
-        # video_size_mb = yt_obj.streams.get_highest_resolution().filesize / (1024 * 1024)  # Video size in MB
-        # print(f"Video Size (MB): {video_size_mb:.2f} MB")
-
-    # #     list_box.insert(END, f" {video_size_mb:.2f} MB")
-        
+        # str(video_title).split(".")[0]
         
 
         filters = yt_obj.streams.filter(progressive=True, file_extension='mp4') 
@@ -392,7 +373,8 @@ def download_videos():
         # connection_checker()
         status_label.configure(text="Downloading!", text_color="white", fg_color="blue")
 
-        filters.get_highest_resolution().download(output_path=output_path, filename_prefix=str(video_title).split(".")[0] + ". ")
+        
+        filters.get_highest_resolution().download(output_path=output_path, filename_prefix=video_title + ". ")
         # filters.get_by_resolution(resolution=resolution).download(output_path=output_path, filename_prefix=str(video_title).split(".")[0] + ". ")
 
         status_label.configure(text="Downloaded!", text_color="white", fg_color="green")
@@ -468,7 +450,7 @@ selected_option = StringVar()
 
 
 # Create a label to display the selected option
-label = ctk.CTkLabel(radio_button_frame, text="Enter Playlist URL:")
+label = ctk.CTkLabel(radio_button_frame, text="Enter The Youtube Video/Playlist URL:")
 label.pack(padx=10)
 
 # Add Entry box 
@@ -522,7 +504,7 @@ progress_bar.pack(pady=("5p", "2p"))
 # style = ttk.Style()
 # style.configure("Rounded.TLabel", borderwidth=0, relief="flat", background="blue")
 
-status_label = ctk.CTkLabel(content_frame, text="About to start downloading!", bg_color='blue', width=400)
+status_label = ctk.CTkLabel(content_frame, text="Thanks for using GDYtube!", bg_color='blue', width=400)
 status_label.pack(pady=("5p", "2p"))
 
 
