@@ -1,4 +1,8 @@
 # Import Required Modules 
+from CTkListbox import CTkListbox
+import customtkinter as ctk
+from CTkListbox import *
+from tkinter import ttk
 from tkinter import *
 from pyyoutube import Api 
 from pytube import YouTube, Playlist
@@ -12,7 +16,7 @@ from dotenv import load_dotenv
 import logging
 
 # Set up logging (optional)
-# logging.basicConfig(level=logging.DEBUG)
+# logging.basicconfigure(level=logging.DEBUG)
 
 load_dotenv(".env")
 
@@ -32,7 +36,7 @@ def is_connection_err(exc):
     if isinstance(exc, ConnectionError):
         # https://docs.python.org/3/library/exceptions.html#ConnectionError
         # ConnectionError includes:
-        # * BrokenPipeError (EPIPE, ESHUTDOWN)
+            # * BrokenPipeError (EPIPE, ESHUTDOWN)
         # * ConnectionAbortedError (ECONNABORTED)
         # * ConnectionRefusedError (ECONNREFUSED)
         # * ConnectionResetError (ECONNRESET)
@@ -48,7 +52,7 @@ def is_connection_err(exc):
         return (exc.errno in NETWORK_ERRNOS) or (exc.errno == errno.ENOTCONN)
     if isinstance(exc, ssl.SSLError):
         # Let's consider any SSL error a connection error. Usually this is:
-        # * ssl.SSLZeroReturnError: "TLS/SSL connection has been closed"
+            # * ssl.SSLZeroReturnError: "TLS/SSL connection has been closed"
         # * ssl.SSLError: [SSL: BAD_LENGTH]
         return True
     return False
@@ -66,19 +70,20 @@ def check_internet():
 
 
 
+
 def check_entry_content():
     if url_input_field.get():
-        get_videos.config(state=NORMAL)  # Enable the button
+        get_videos.configure(state=NORMAL)  # Enable the button
     else:
-        download_start.config(state=DISABLED)
-        get_path.config(state=DISABLED)
-        get_videos.config(state=DISABLED)  # Disable the button
+        download_start.configure(state=DISABLED)
+        get_path.configure(state=DISABLED)
+        get_videos.configure(state=DISABLED)  # Disable the button
         list_box.delete(0, END)
 
 def clear_entry():
     url_input_field.delete(0, END)  # Clear the entry's content
     check_entry_content()
-    select_all_checkbox.config(state=DISABLED)
+    select_all_checkbox.configure(state=DISABLED)
 
 def get_path():
     # Open a file dialog to select a directory
@@ -90,8 +95,8 @@ def get_path():
             path_file.write(path)
     
         # The listbox and select all check button become clickable only if the "choose" path button is clicked
-        list_box.config(state=NORMAL)
-        select_all_checkbox.config(state=NORMAL)
+        list_box.configure(state=NORMAL)
+        select_all_checkbox.configure(state=NORMAL)
 
 
         return path
@@ -100,7 +105,7 @@ def get_path():
         with open(output_dir, "r") as path:
             path = path.read().strip()
             print(path)
-            list_box.config(state=DISABLED)
+            list_box.configure(state=DISABLED)
             messagebox.showerror("Error", "no path")
             return None
 
@@ -135,9 +140,9 @@ def check_selection(event):
             print(f"{len(selected_indices)} items are selected!")
 
     if selected_indices:
-        download_start.config(state=NORMAL)  # Enable the button
+        download_start.configure(state=NORMAL)  # Enable the button
     else:
-        download_start.config(state=DISABLED)  # Disable the button
+        download_start.configure(state=DISABLED)  # Disable the button
 
 
 def select_all():
@@ -153,11 +158,11 @@ def checkbutton_state():
         
         # Select all items
         list_box.selection_set(0, num_items - 1)
-        download_start.config(state=NORMAL)  # Enable the button
+        download_start.configure(state=NORMAL)  # Enable the button
         
     else:
         list_box.selection_clear(0, num_items - 1)
-        download_start.config(state=DISABLED)  # Disable the button
+        download_start.configure(state=DISABLED)  # Disable the button
 
 def straight_download(url=None):
     from pytube import Playlist
@@ -176,6 +181,8 @@ def straight_download(url=None):
 
 # straight_download()
 def get_list_videos(): 
+    progress_bar.pack()
+
     # global video_item
     # Clear ListBox 
     list_box.delete(0, 'end') 
@@ -190,14 +197,13 @@ def get_list_videos():
         if get_path.cget("state") == "disabled":
             select_all_checkbox_var.set(0)
             checkbutton_state()
-            list_box.config(state=NORMAL)
+            list_box.configure(state=NORMAL)
             
 
     global playlist_item_by_id 
     # Create API Object 
     api = Api(api_key=os.environ.get("API_KEY")) 
-    # try:
-        
+    # try:       
             
 
     if "youtube" in url_input_field.get() and "playlist" in url_input_field.get(): 
@@ -229,7 +235,7 @@ def get_list_videos():
         # print(f"Video Title: {video_title}")
         # video_size_mb = yt_obj.streams.get_highest_resolution().filesize / (1024 * 1024)  # Video size in MB
         # print(f"Video Size (MB): {video_size_mb:.2f} MB")
-    if "youtu.be" in url_input_field.get():
+    elif "youtu.be" in url_input_field.get():
         video_id = url_input_field.get()[len("https://youtu.be/"):]
         
         # Get the video and it title
@@ -239,9 +245,25 @@ def get_list_videos():
         video_title =video_info["title"]
         
         print(video_id) 
-
-
         list_box.insert(END, f"{video_title}")
+        
+    elif "youtube" in url_input_field.get() and "watch" in url_input_field.get():
+        video_id = url_input_field.get()[len("https://www.youtube.com/watch?v="):]
+        # Get the video and it title
+        print("yes",video_id) 
+    
+        video_item = api.get_video_by_id(video_id=video_id, return_json=True)
+        # print(video)
+
+        video_info =video_item["items"][0]["snippet"]
+        video_title =video_info["title"]
+        
+        list_box.insert(END, f"{video_title}")
+    
+    else:
+        status_label.configure(text="URL not supported", text_color="white", fg_color="red")
+
+        # list_box.insert(END, f"{video_title}")
 
         # playlist_id = url_input_field.get() 
 
@@ -251,14 +273,14 @@ def get_list_videos():
 
     # The list become clickable based on the state of the Choose path button
     if get_path.cget("state") == "normal":
-        list_box.config(state=NORMAL)
+        list_box.configure(state=NORMAL)
         select_all_checkbox_var.set(0)
         print("yes")
     if get_path.cget("state") == "disabled":
         select_all_checkbox_var.set(0)
         checkbutton_state()
-        list_box.config(state=DISABLED)
-        get_path.config(state=NORMAL)
+        list_box.configure(state=DISABLED)
+        get_path.configure(state=NORMAL)
             # Simulating the exception for demonstration purposes
             # raise pyyoutube.error.PyYouTubeException("YouTubeException(status_code=404,message=The playlist identified with the request's <code>url_input_field</code> parameter cannot be found.)")
     # except Exception as e:
@@ -270,7 +292,12 @@ def get_list_videos():
         # messagebox.showerror("Error", f"An error occurred:\n{error_message}")
 
 
-    
+def packer(progress_label, progress_bar, status_label):
+    progress_label.pack(pady=("5p", "2p"))
+    progress_bar.pack(pady=("5p", "2p"))
+    status_label.pack(pady=("5p", "2p"))
+
+# packer() 
 
 
 
@@ -279,23 +306,30 @@ def threading():
     t1 = Thread(target=download_videos) 
     t1.start() 
 
+def connection_checker():
+    while check_internet() == False:
+        print("No internet connection.")
+        messagebox.showerror("Error", "Check your connection\nAnd click OK to continue")
+    else:
+        print("Internet connection is available.")
+        if get_path.cget("state") == "disabled":
+            select_all_checkbox_var.set(0)
+            checkbutton_state()
+            list_box.configure(state=NORMAL) 
 
 def download_videos():
-    def connection_checker():
-        while check_internet() == False:
-            print("No internet connection.")
-            messagebox.showerror("Error", "Check your connection\nAnd click OK to continue")
-        else:
-            print("Internet connection is available.")
-            if get_path.cget("state") == "disabled":
-                select_all_checkbox_var.set(0)
-                checkbutton_state()
-                list_box.config(state=NORMAL) 
-        download_start.config(state="disabled") 
-        get_path.config(state="disabled")
-        get_videos.config(state="disabled") 
+    
+    # resolution = resolution_var.get()
+    # print(resolution)
 
     connection_checker()
+
+    download_start.configure(state="disabled") 
+    get_path.configure(state="disabled")
+    get_videos.configure(state="disabled") 
+
+        # Pack the labels and progress bar only when the download button is clicked
+
 
     # Iterate through all selected videos 
     # Counter variable to keep track of position number
@@ -310,11 +344,12 @@ def download_videos():
             print(video_id)
 
         # if selected_option.get() == "Enter Playlist URL":
-    
+        
         # print(video)
         # video_info =video_item["items"][0]["snippet"]
     
-        if "youtube" in url_input_field.get() and "playlist" in url_input_field.get(): 
+            
+        elif "youtube" in url_input_field.get() and "playlist" in url_input_field.get(): 
             playlist_id = url_input_field.get()[len( 
                 "https://www.youtube.com/playlist?list="):]
             # print(selected_option.get())
@@ -324,16 +359,25 @@ def download_videos():
             print(video_id) 
             
 
-        link = f"https://www.youtube.com/watch?v={video_id}"
 
-        yt_obj = YouTube(link)
+        elif "youtube" in url_input_field.get() and "watch" in url_input_field.get():
+            video_id = url_input_field.get()[len("https://www.youtube.com/watch?v="):]
+        
+            print(video_id)
+            # https://youtu.be/kMOi0LvupN0
+        
+        # else:
+        #     status_label.configure(text="URL not supported", text_color="white", fg_color="red")
+
+        link = f"https://www.youtube.com/watch?v={video_id}"
+        yt_obj = YouTube(link, on_progress_callback=on_progress)
 
     #     # video_title = yt_obj.title  # Get the video title
         print(video_title)
 
-    # #     print(f"Video Title: {video_title}")
-    # #     video_size_mb = yt_obj.streams.get_highest_resolution().filesize / (1024 * 1024)  # Video size in MB
-    # #     print(f"Video Size (MB): {video_size_mb:.2f} MB")
+
+        # video_size_mb = yt_obj.streams.get_highest_resolution().filesize / (1024 * 1024)  # Video size in MB
+        # print(f"Video Size (MB): {video_size_mb:.2f} MB")
 
     # #     list_box.insert(END, f" {video_size_mb:.2f} MB")
         
@@ -345,29 +389,45 @@ def download_videos():
         with open(output_dir, "r") as path_file:
             output_path = path_file.readline()
         
-        connection_checker()
+        # connection_checker()
+        status_label.configure(text="Downloading!", text_color="white", fg_color="blue")
+
         filters.get_highest_resolution().download(output_path=output_path, filename_prefix=str(video_title).split(".")[0] + ". ")
+        # filters.get_by_resolution(resolution=resolution).download(output_path=output_path, filename_prefix=str(video_title).split(".")[0] + ". ")
+
+        status_label.configure(text="Downloaded!", text_color="white", fg_color="green")
 
         # Increment position counter
         # position += 1
 
-    messagebox.showinfo("Success", "Video Successfully downloaded") 
-    download_start.config(state="normal") 
-    get_path.config(state="normal")
-    get_videos.config(state="normal") 
+    # messagebox.showinfo("Success", "Video Successfully downloaded") 
+    download_start.configure(state="normal") 
+    get_path.configure(state="normal")
+    get_videos.configure(state="normal") 
 
 
+# call back function to update the progress
 
+def on_progress(stream, chunk, bytes_remaining):
+    total_size = stream.filesize
+    bytes_downloaded = total_size - bytes_remaining
+    percentage_completed = bytes_downloaded / total_size * 100
+    print(percentage_completed)
+    progress_label.configure(text=str(int(percentage_completed)) + "%")
+    progress_label.update()
+    progress_bar.set(float(percentage_completed / 100))
 
     
-# Create Object 
-root = Tk() 
+# Create Object ( root window)
+# root = Tk() 
+root = ctk.CTk()
+
 
 # Title
 root.title("GDYtube")
 
-# Set geometry 
-root.geometry('600x600') 
+ctk.set_appearance_mode("system")
+ctk.set_default_color_theme("blue")
 
 # iconbitmap(): The iconbitmap() method allows you to set an icon for your Tkinter window. It takes the path to an .ico file as its argument. 
 # root.iconbitmap("/path/to/your_icon.ico")
@@ -375,21 +435,25 @@ root.geometry('600x600')
 # iconphoto(): The iconphoto() method sets the title bar icon for a Tkinter window. You can use various image types, including .png.
 root.iconphoto(False, PhotoImage(file="app_data/favicon.png"))
 
+
+
+# Set geometry 
+root.geometry('720x480') 
+root.minsize(720, 500)
+# root.maxsize(1080, 720)
+
+
+content_frame = ctk.CTkFrame(root)
+content_frame.pack(fill=ctk.BOTH, expand=True, padx=10, pady=10)
 # Add Label 
-Label(root, text="GUIDASWORLD Youtube Playlist Downloader", 
-	font="italic 15 bold").pack(pady=10) 
-Label(root, text="Highest resolutions only", 
-	font="italic 10 bold").pack(pady=10) 
+header_lable = ctk.CTkLabel(content_frame, text="GUIDASWORLD Youtube Playlist Downloader") 
+under_header = ctk.CTkLabel(content_frame, text="Highest resolutions only")
 
-
-def show_selected():
-   # Display the selected option
-    label.config(text=selected_option.get())
-
-
+header_lable.pack(pady=("10p", "5p"))
+under_header.pack()
 
 # Create a frame to hold playlist or one video radio button
-radio_button_frame = Frame(root)
+radio_button_frame = ctk.CTkFrame(content_frame)
 radio_button_frame.pack()
 
 # Create radio buttons and associate them with the variable
@@ -402,64 +466,130 @@ selected_option = StringVar()
 # option1.pack(side="left", padx=10)
 # option2.pack(side="left", padx=10)
 
-# Create a label to display the selected option
-label = Label(radio_button_frame, text="Enter Playlist URL:", font="italic 10")
-label.pack(side="left", padx=10)
 
+# Create a label to display the selected option
+label = ctk.CTkLabel(radio_button_frame, text="Enter Playlist URL:")
+label.pack(padx=10)
 
 # Add Entry box 
-url_input_field = Entry(root, width=60) 
-
+url_input_field = ctk.CTkEntry(content_frame, width=400, height=40) 
 url_input_field.pack(pady=5)
-clear_url = Button(root, text="Clear link", command=clear_entry)
-clear_url.pack(padx=10) 
+
+# Clear url input field
+clear_url = ctk.CTkButton(content_frame, text="Clear link", command=clear_entry)
+clear_url.pack(padx=10, pady=10) 
 
 # Create a frame to hold the buttons
-button_frame = Frame(root)
+button_frame = ctk.CTkFrame(content_frame)
 button_frame.pack()
 
+
+
 # Create a "Paste" button
-paste_button = Button(button_frame, text="Paste", command=paste_from_clipboard)
+paste_button = ctk.CTkButton(button_frame, text="Paste", command=paste_from_clipboard)
 paste_button.pack(side="left", padx=10)
 
 # Create a "Get Videos" button
-get_videos = Button(button_frame, text="Get Videos", command=get_list_videos, state=DISABLED)
+get_videos = ctk.CTkButton(button_frame, text="Get Videos", command=get_list_videos, state=DISABLED)
 get_videos.pack(side="left", padx=10)
 
 # Bind the function to the Entry widget
 url_input_field.bind("<KeyRelease>", lambda event: check_entry_content())
 
 # Choose a path for video
-get_path = Button(button_frame, text="Choose a path", command=get_path, state=DISABLED)
+get_path = ctk.CTkButton(button_frame, text="Choose a path", command=get_path, state=DISABLED)
 get_path.pack(side="left", padx=10)
 
+# Create a resolution combo box
+# resolutions = ["720p", "360p", "240p"]
+# resolution_var = ctk.StringVar()
+# resolutions_combobox = ctk.CTkComboBox(content_frame, values=resolutions, variable=resolution_var, button_color="#2d89df")
+# # resolutions_combobox = ttk.Combobox(content_frame, values=resolutions, textvariable=resolution_var)
+# resolutions_combobox.pack(pady=("10p", "5p"))
+# resolutions_combobox.set("720p")
+
+
+# Create a label and the progress bar to display the download progress
+progress_label = ctk.CTkLabel(content_frame, text="0%")
+progress_label.pack(pady=("5p", "2p"))
+
+
+progress_bar = ctk.CTkProgressBar(content_frame, width=400)
+progress_bar.set(0.0)
+progress_bar.pack(pady=("5p", "2p"))
+
+# # Create a style
+# style = ttk.Style()
+# style.configure("Rounded.TLabel", borderwidth=0, relief="flat", background="blue")
+
+status_label = ctk.CTkLabel(content_frame, text="About to start downloading!", bg_color='blue', width=400)
+status_label.pack(pady=("5p", "2p"))
+
+
 # Create a "Download Start" button
-download_start = Button(button_frame, text="Download Start", command=threading, state=DISABLED)
+download_start = ctk.CTkButton(button_frame, text="Download Start", command=threading, state=DISABLED)
+# download_start = ctk.CTkButton(button_frame, text="Download Start", command=threading, state=DISABLED)
 download_start.pack(side="left", padx=10)
 
+
 # Create a "Quit" button
-quit_download = Button(button_frame, text="Quit", command=quit)
+quit_download = ctk.CTkButton(button_frame, text="Quit", command=quit)
 quit_download.pack(side="left", padx=10)
 
 
-Checkbutton_frame = Frame(root)
-Checkbutton_frame.pack()
+def show_selected():
+       # Display the selected option
+    label.configure(text=selected_option.get())
+
+
+
+
+
+
+
+# Checkbutton_frame = ctk.CTkFrame(content_frame)
+# Checkbutton_frame.pack()
 
 # Create select All checkbox
 select_all_checkbox_var = IntVar()  # Variable to store the state
-select_all_checkbox = Checkbutton(Checkbutton_frame, text="Select All", variable=select_all_checkbox_var, command=checkbutton_state, state=DISABLED)
-select_all_checkbox.pack()
+select_all_checkbox = ctk.CTkCheckBox(content_frame, text="Select All", variable=select_all_checkbox_var, command=checkbutton_state, state=DISABLED)
+select_all_checkbox.pack(pady=10)
 
 # Add Scrollbar 
-scrollbar = Scrollbar(root) 
+scrollbar = Scrollbar(content_frame) 
 scrollbar.pack(side=RIGHT, fill=BOTH) 
-list_box = Listbox(root, selectmode="multiple") 
+list_box = Listbox(content_frame, selectmode="multiple") 
 list_box.pack(expand=YES, fill="both") 
-list_box.config(yscrollcommand=scrollbar.set) 
-scrollbar.config(command=list_box.yview) 
+list_box.configure(yscrollcommand=scrollbar.set) 
+scrollbar.configure(command=list_box.yview) 
 
 # Bind the selection event to the check_selection function
 list_box.bind("<<ListboxSelect>>", check_selection)
+
+
+
+
+
+# root = ctk.CTk()
+
+# # Create the "Select All" checkbox
+# select_all_checkbox_var = ctk.IntVar()  # Variable to store the state
+# select_all_checkbox = ctk.CTkCheckBox(root, text="Select All", variable=select_all_checkbox_var, command=checkbutton_state, state=ctk.DISABLED)
+# select_all_checkbox.pack(pady=10)
+
+# # Add a scrollbar
+# scrollbar = ctk.CTkScrollbar(root)
+# scrollbar.pack(side=ctk.RIGHT, fill=ctk.BOTH)
+
+# # Create the CTkListbox
+# list_box = CTkListbox(root, selectmode="multiple")
+# list_box.pack(expand=ctk.YES, fill="both")
+# list_box.configure(yscrollcommand=scrollbar.set)
+# scrollbar.configure(command=list_box.yview)
+
+# # Bind the selection event to the check_selection function
+# list_box.bind("<<ListboxSelect>>", check_selection)
+
 
 
 
